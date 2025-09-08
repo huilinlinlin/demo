@@ -19,11 +19,9 @@ function App() {
       <h1>{message || 'Loading...'}</h1>
     </div>
       <div>
-      <h1>Hello KendoReact + Vite</h1>
-      <Button primary={true}>Click me</Button>
+      <Button primary={true}>Hello KendoReact + Vite</Button>
     </div>
     </>
-  )
-}
+  )}
 
 export default App
