@@ -10,10 +10,18 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@progress/kendo-intl": "^3.1.2",
     "@progress/kendo-licensing": "^1.7.1",
+    "@progress/kendo-popup-common": "^1.9.2",
+    "@progress/kendo-react-animation": "^12.0.1",
+    "@progress/kendo-react-buttons": "^12.0.1",
+    "@progress/kendo-react-common": "^12.0.1",
     "@progress/kendo-react-dateinputs": "^12.0.1",
     "@progress/kendo-react-intl": "^12.0.1",
+    "@progress/kendo-react-popup": "^12.0.1",
+    "@progress/kendo-react-ripple": "^12.0.1",
     "@progress/kendo-theme-default": "^12.0.1",
+    "@progress/kendo-webspeech-common": "^1.0.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
