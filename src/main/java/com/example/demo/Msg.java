@@ -1,13 +1,17 @@
 package com.example.demo;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 
 @Entity
+@Table(name = "MSG")
 public class Msg {
 
   @Id
@@ -16,12 +20,12 @@ public class Msg {
   private Integer msgId; 
    @Column(name ="MSG_USER_ID")
   private String msgUserid;
-   @Column(name ="MSG_BOOK_ID")
-  private String msgBookid;
    @Column(name ="MSG_CONTENT")
   private String msgContent;
    @Column(name ="MSG_DATE")
+   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime msgDate;
+  
   public Integer getMsgId() {
     return msgId;
   }
@@ -34,12 +38,6 @@ public class Msg {
   public void setMsgUserid(String msgUserid) {
     this.msgUserid = msgUserid;
   }
-  public String getMsgBookid() {
-    return msgBookid;
-  }
-  public void setMsgBookid(String msgBookid) {
-    this.msgBookid = msgBookid;
-  }
   public String getMsgContent() {
     return msgContent;
   }
@@ -51,7 +49,14 @@ public class Msg {
   }
   public void setMsgDate(LocalDateTime msgDate) {
     this.msgDate = msgDate;
+    System.out.println(msgDate);
   }
-
+  @Override
+  public String toString(){
+    return "MSG = msgId:"+msgId
+            +", msgUserid:"+msgUserid
+            +", msgContent:"+msgContent
+            +", msgDate:"+msgDate;
+  }
   
 }

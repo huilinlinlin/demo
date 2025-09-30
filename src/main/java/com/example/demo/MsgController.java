@@ -7,15 +7,16 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
+@CrossOrigin(origins = "http://localhost:5173")  // 允許前端的位址
 @RestController
-@RequestMapping("/api/msg")
+@RequestMapping("/msg")
 public class MsgController {
 
     @Autowired
     private MsgRepository msgRepository;
 
     // 查全部
-    @GetMapping
+    @GetMapping("/index")
     public List<Msg> getAllMsgs() {
         return msgRepository.findAll();
     }
@@ -37,6 +38,7 @@ public class MsgController {
     // 新增留言
     @PostMapping
     public Msg createMsg(@RequestBody Msg msg) {
+        System.out.println(msg.toString());
         return msgRepository.save(msg);
     }
 
@@ -46,7 +48,6 @@ public class MsgController {
         return msgRepository.findById(id)
                 .map(msg -> {
                     msg.setMsgUserid(updatedMsg.getMsgUserid());
-                    msg.setMsgBookid(updatedMsg.getMsgBookid());
                     msg.setMsgContent(updatedMsg.getMsgContent());
                     msg.setMsgDate(updatedMsg.getMsgDate());
                     Msg savedMsg = msgRepository.save(msg);
