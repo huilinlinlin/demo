@@ -1,5 +1,6 @@
-import React, {useEffect,useState} from "react";
-function MsgCreate(){
+import MsgEdit from './MsgEdit'
+import React, {useState} from "react";
+function MsgCreate({onMessageSent}){
     const [formData,setFormData] = useState({
         msgUserid:'',
         msgContent:'',
@@ -32,27 +33,30 @@ function MsgCreate(){
             headers: {
                 "Content-Type": "application/json"
             },
-            
             body: JSON.stringify(updatedData)
         }).then(res => {
             if (!res.ok) throw new Error("新增留言失敗");
             return res.json();
         }).then(data => {
-        // 清空表單
+        // 新增成功清空表單
         setFormData({ msgUserid: '', msgContent: '' , msgDate: ''});
+        if(onMessageSent) onMessageSent();// 通知父元件
       }).catch(err => console.log("Post error:", err));
-      function getDate(){
+      
+    }
+      const getDate = () => {
         const d = new Date();
         const pad = (n) => n.toString().padStart(2, '0');
         const formattedDate = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-        alert(formattedDate);
         return formattedDate;
       }
-    }
-
+   const [edit, setEdit] = useState({msgid:'',type:''});
+ const doEdit = (num,action) => {
+    setEdit({msgid:num,type:action});
+ }   
     return (
         <>
-        <form onSubmit={handleSubmit} style={{ marginTop: '20px', marginBottom: '20px' }}>
+        <form onSubmit={handleSubmit} >
         <input
           type="text"
           name="msgUserid"
@@ -60,16 +64,21 @@ function MsgCreate(){
           value={formData.msgUserid}
           onChange={handleInputChange}
         />
-        <input
-          type="text"
+        <br/>
+        <textarea
           name="msgContent"
           placeholder="留言內容"
           value={formData.msgContent}
           onChange={handleInputChange}
         />
+        <br/>
         <button type="submit">送出留言</button>
-      </form>
-        </>
+      
+      <input type='button' value={'修改'} onClick={ () => doEdit(msg.msgId,'E')}/>
+            <input type='button' value={'刪除'} onClick={ () => doEdit(msg.msgId,'D')}/>
+            <MsgEdit action={edit}/>
+       </form> 
+       </>
     );
 }
 export default MsgCreate;
