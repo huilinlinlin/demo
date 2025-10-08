@@ -39,6 +39,7 @@ function MsgCreate({onMessageSent}){
             return res.json();
         }).then(data => {
         // 新增成功清空表單
+        console.log(data);
         setFormData({ msgUserid: '', msgContent: '' , msgDate: ''});
         if(onMessageSent) onMessageSent();// 通知父元件
       }).catch(err => console.log("Post error:", err));
@@ -51,9 +52,9 @@ function MsgCreate({onMessageSent}){
         return formattedDate;
       }
    const [edit, setEdit] = useState({msgid:'',type:''});
- const doEdit = (num,action) => {
-    setEdit({msgid:num,type:action});
- }   
+//  const doEdit = (num,action) => {
+//     setEdit({msgid:num,type:action});
+//  }   
     return (
         <>
         <form onSubmit={handleSubmit} >
@@ -74,8 +75,8 @@ function MsgCreate({onMessageSent}){
         <br/>
         <button type="submit">送出留言</button>
       
-      <input type='button' value={'修改'} onClick={ () => doEdit(msg.msgId,'E')}/>
-            <input type='button' value={'刪除'} onClick={ () => doEdit(msg.msgId,'D')}/>
+      {/* <input type='button' value={'修改'} onClick={ () => doEdit(msg.msgId,'E')}/>
+            <input type='button' value={'刪除'} onClick={ () => doEdit(msg.msgId,'D')}/> */}
             <MsgEdit action={edit}/>
        </form> 
        </>
