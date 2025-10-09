@@ -1,12 +1,12 @@
 import './App.css'
 import "@progress/kendo-theme-default/dist/all.css";
 import { Button } from '@progress/kendo-react-buttons';
-import MsgPage from './components/MsgComponent/MsgPage';
+import NotePage from './components/NoteComponent/NotePage';
 
 function App() {
   return (
     <>
-    <MsgPage/>
+    <NotePage/>
     </>
   )}
 

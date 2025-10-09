@@ -10,4 +10,6 @@ form{
 }
 textarea{
   margin-top: 5pt;
+  width: 500px;
+  height: 100px;
 }
