@@ -19,7 +19,13 @@ function NoteShow({refreshFlag,setEditNote}) {
    setEditNote(note);
  }
  const doDownload = (noteId) =>{
-   setEditNote(noteId);
+   fetch("http://localhost:8081/note/download.do",{
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain"
+    },
+    body: noteId.toString()
+   })
  }
   return (
     <>
@@ -44,7 +50,7 @@ function NoteShow({refreshFlag,setEditNote}) {
         <tr key = {note.noteId}>
           <td>{note.noteItem}</td>
           <td><div onClick = { () => doEdit(note)}>{note.noteContent}</div></td>
-          <td><div onclick = { () => doDownload(note.noteId)} >{note.noteFile}</div></td>
+          <td><div onClick = { () => doDownload(note.noteId)} >{note.noteFile}</div></td>
           <td>{note.noteDate == null ? "":note.noteDate.split('.')[0]}</td>
         </tr>
       ))}
