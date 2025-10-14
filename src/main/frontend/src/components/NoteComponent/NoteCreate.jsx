@@ -82,7 +82,6 @@ function NoteCreate({setRefreshFlag,editNote}){
           if (!res.ok) throw new Error("刪除失敗");
           return res;
       }).then(data => {
-      // 新增成功清空表單
       console.log(data);
       doclear('R');
       if(setRefreshFlag) setRefreshFlag();// 通知父元件
@@ -114,18 +113,19 @@ function NoteCreate({setRefreshFlag,editNote}){
           onChange={handleInputChange}
         />
         <br/>
-        <textarea
+        <input
+          type="text"
           name="noteContent"
           placeholder="簡述筆記內容"
           value={formData.noteContent}
           onChange={handleInputChange}
         />
-        <br/>
         <input type="file" name="file"/>
         <br/>
-        <input type="button" value="送出留言" onClick={handleSubmit}/>
-        <input type="button" value="清除" onClick={ () => doclear('C')}/>
-        <input type="button" value="刪除留言" onClick={doDelete}/>
+        <input type="button" value="SAVE" onClick={handleSubmit}/>
+        <input type="button" value="NEW" onClick={() => doclear('R') }/>
+        <input type="button" value="CLEAR" onClick={ () => doclear('C')}/>
+        <input type="button" value="DELETE" onClick={doDelete}/>
        </form>
        </>
     );

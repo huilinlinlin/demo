@@ -1,3 +1,6 @@
+body{
+  background-color: #FAF9EE;
+}
 div {
   text-align: left;
 }
@@ -5,11 +8,43 @@ tbody {
   text-align: left;
 }
 form{
+  padding: 5pt;
   text-align: left;
-  background-color: azure;
+}
+input{
+  margin-right: 5pt;
+}
+input[type="text"]{
+  margin-top: 5pt;
+  text-align: left;
+  width: 500px;
 }
 textarea{
   margin-top: 5pt;
   width: 500px;
-  height: 100px;
+}
+.title{
+  text-align: center;
+  font-size: 2em;
+}
+.editSection{
+  background-color: #A2AF9B;
+  margin: 5pt;
+}
+.showSection{
+  display: flex;
+  flex-direction: row;;
+  height: '100vh';
+}
+.listSection{
+  width: 40%;
+  background-color: #DCCFC0;
+  overflow: auto; 
+  margin: 5pt;
+}
+.detailSection{
+  width: 90%;
+  background-color: #EEEEEE;
+  overflow: auto; 
+  margin: 5pt;
 }

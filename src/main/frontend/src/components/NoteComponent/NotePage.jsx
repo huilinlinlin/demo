@@ -14,9 +14,15 @@ function NotePage() {
   }
   return (
     <>
-    <h2>筆記本</h2>
-    <NoteCreate setRefreshFlag = {handleRefesh} editNote = {editNote}/>
-    <NoteShow refreshFlag = {refreshFlag} setEditNote = {setEditNote}/>
+    <span className={`title`}>筆記本</span>
+     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+      <div className={`editSection`}>
+        <NoteCreate setRefreshFlag = {handleRefesh} editNote = {editNote}/>
+      </div>
+      <div>
+        <NoteShow refreshFlag = {refreshFlag} setEditNote = {setEditNote}/>
+      </div>     
+    </div>
     </>
   )}
 

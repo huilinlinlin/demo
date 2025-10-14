@@ -123,21 +123,41 @@ public class NoteController {
     }
 
     //下載檔案
-    @PostMapping("/download.do")
-    public void download(@RequestBody String id,HttpServletResponse response) {
+    @GetMapping("/download.do")
+    public void download(@RequestParam String id,HttpServletResponse response) {
         String fileName = id + ".txt";
-        String filePath = "C:\\DataSource\\notefile\\"+ fileName;
-        File file = new File (filePath);
-        if (!file.exists() || !file.isDirectory()){
-            System.out.println("檔案不存在");
+        String filePath = "C:\\DataSource\\notefile";
+        File file = new File (filePath+File.separator+fileName);
+        //File folder = new File("C:\\DataSource\\notefile");
+        if (!file.exists() || ! new File(filePath).isDirectory()){
+            System.out.println("檔案或目錄不存在");
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return ;
         }
         try (FileInputStream fis = new FileInputStream(file);
             BufferedOutputStream bos = new BufferedOutputStream(response.getOutputStream())){
-            response.setContentType("text/plain; charset=ios-8859-1");
-            response.setHeader("Content-disposition","attachment; filename=" + URLEncoder.encode(fileName, StandardCharsets.UTF_8));
+            response.setContentType("text/plain; charset=UTF-8");
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+            String encodedFileName = URLEncoder.encode(fileName, "UTF-8").replaceAll("\\+", "%20");
+            response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFileName);
+            response.setContentLength((int) file.length()); 
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                bos.write(buffer, 0, bytesRead);
+            }
+            bos.flush();
         } catch (Exception e) {
-            // TODO: handle exception
+           System.out.println("下載檔案失敗: "+e.toString());
+           response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    //讀取檔案
+    @GetMapping("/readFile/{id}")
+    public String readFile(@PathVariable Integer id) {
+    
+
+        return "123";
     }
 }
