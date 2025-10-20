@@ -24,7 +24,6 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @CrossOrigin(origins = "http://localhost:5173")  // 允許前端的位址
 @RestController
@@ -80,7 +79,7 @@ public class NoteController {
         @RequestParam("noteContent") String noteContent,
         @RequestParam(value = "noteFile", required = false) MultipartFile file,
         @RequestParam("noteDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime noteDate) {
-            // 儲存檔案到本地目錄    
+            // 儲存檔案到本地目錄            
         return noteRepository.findById(id)
                 .map(note -> {
                     note.setNoteItem(noteItem);
@@ -105,10 +104,13 @@ public class NoteController {
 
     //上傳檔案
     public void saveFile ( Integer noteId, MultipartFile file){
-        System.out.println(file.isEmpty());
-        String uploadDir = "C:\\DataSource\\notefile\\"; 
-        String fileName = noteId.toString()+".txt";
+        String uploadDir = "C:\\DataSource\\notefile\\";
+        String originalFilename = file.getOriginalFilename();
+        String extension = originalFilename == null ? "txt" : originalFilename.substring(originalFilename.lastIndexOf('.')+1);
+        String fileName = noteId.toString()+"."+extension;
         Path filePath = Paths.get(uploadDir , fileName);
+        
+        System.out.println("副檔名：" + fileName);
         try {
             Files.createDirectories(filePath.getParent()); // 確保目錄存在
             Files.write(filePath, file.getBytes());
