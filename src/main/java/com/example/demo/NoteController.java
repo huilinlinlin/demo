@@ -1,6 +1,8 @@
 package com.example.demo;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -8,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.http.MediaType;
@@ -32,6 +35,7 @@ public class NoteController {
 
     @Autowired
     private NoteRepository noteRepository;
+    private String noteFilePath = "C:\\DataSource\\notefile";
 
     // 查全部
     @GetMapping("/index")
@@ -104,11 +108,10 @@ public class NoteController {
 
     //上傳檔案
     public void saveFile ( Integer noteId, MultipartFile file){
-        String uploadDir = "C:\\DataSource\\notefile\\";
         String originalFilename = file.getOriginalFilename();
         String extension = originalFilename == null ? "txt" : originalFilename.substring(originalFilename.lastIndexOf('.')+1);
         String fileName = noteId.toString()+"."+extension;
-        Path filePath = Paths.get(uploadDir , fileName);
+        Path filePath = Paths.get(noteFilePath+"\\" , fileName);
         
         System.out.println("副檔名：" + fileName);
         try {
@@ -126,40 +129,72 @@ public class NoteController {
 
     //下載檔案
     @GetMapping("/download.do")
-    public void download(@RequestParam String id,HttpServletResponse response) {
-        String fileName = id + ".txt";
-        String filePath = "C:\\DataSource\\notefile";
-        File file = new File (filePath+File.separator+fileName);
-        //File folder = new File("C:\\DataSource\\notefile");
-        if (!file.exists() || ! new File(filePath).isDirectory()){
-            System.out.println("檔案或目錄不存在");
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            return ;
-        }
-        try (FileInputStream fis = new FileInputStream(file);
-            BufferedOutputStream bos = new BufferedOutputStream(response.getOutputStream())){
-            response.setContentType("text/plain; charset=UTF-8");
-            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-            String encodedFileName = URLEncoder.encode(fileName, "UTF-8").replaceAll("\\+", "%20");
-            response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFileName);
-            response.setContentLength((int) file.length()); 
-            byte[] buffer = new byte[8192];
-            int bytesRead;
-            while ((bytesRead = fis.read(buffer)) != -1) {
-                bos.write(buffer, 0, bytesRead);
+    public void download(@RequestParam Integer id,HttpServletResponse response,HttpServletRequest request) {
+        Optional<Note> optionalNote = noteRepository.findById(id);
+        if (optionalNote.isPresent()){
+            Note note = optionalNote.get();
+            String fileName = note.getNoteFile();
+            File file = new File (noteFilePath+File.separator+fileName);
+                        
+            if (!file.exists() || ! new File(noteFilePath).isDirectory()){
+                System.out.println("檔案或目錄不存在");
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return ;
             }
-            bos.flush();
-        } catch (Exception e) {
-           System.out.println("下載檔案失敗: "+e.toString());
-           response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        }
+            try (FileInputStream fis = new FileInputStream(file);
+                BufferedOutputStream bos = new BufferedOutputStream(response.getOutputStream())){
+                String contentType = request.getServletContext().getMimeType(fileName);
+                if (contentType == null) {
+                    contentType = "application/octet-stream";
+                }
+                if (contentType.startsWith("text/")) {
+                    response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+                }
+                response.setContentType(contentType);                    
+                response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+                String encodedFileName = URLEncoder.encode(fileName, "UTF-8").replaceAll("\\+", "%20");
+                response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFileName);
+                response.setContentLength((int) file.length()); 
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = fis.read(buffer)) != -1) {
+                    bos.write(buffer, 0, bytesRead);
+                }
+                bos.flush();
+            } catch (Exception e) {
+            System.out.println("下載檔案失敗: "+e.toString());
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            }
+        }       
     }
 
-    //讀取檔案
-    @GetMapping("/readFile/{id}")
-    public String readFile(@PathVariable Integer id) {
-    
+     //讀取檔案
+     @GetMapping("/readFile/{id}")
+     public ResponseEntity<Resource> readFile(@PathVariable Integer id) {
+        System.out.println("111");
+         Optional<Note> optionalNote = noteRepository.findById(id);
+         if (optionalNote.isPresent()){
+             Note note = optionalNote.get();
+             String fileName = note.getNoteFile();
+            try {
+                File file = new File(noteFilePath+File.separator+fileName);
+                if (!file.exists()) {
+                    return ResponseEntity.notFound().build();
+                }
+                Resource resource = new FileSystemResource(file);
+                String contentType = Files.probeContentType(file.toPath());
+                if (contentType == null) {
+                    contentType = "application/octet-stream";
+                }
+                 return ResponseEntity.ok()
+                     .contentType(MediaType.parseMediaType(contentType))
+                     .body(resource);
+             } catch (Exception e) {
+                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+             }
+         }else{
+            return ResponseEntity.notFound().build();
+         }
+     }   
 
-        return "123";
-    }
 }

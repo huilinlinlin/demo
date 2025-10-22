@@ -60,7 +60,6 @@ console.log(note.noteId)
               <td width="100pt">項目名稱</td>
               <td width="500pt">內容</td>
               <td width="100pt">附件</td>
-              <td width="160pt">時間</td>
             </tr>
           </thead>
           <tbody>
@@ -80,7 +79,7 @@ console.log(note.noteId)
         </table>
       </div>
       <div className={`detailSection`} >
-           {detail}
+           <iframe src="http://localhost:8081/note/readFile/10" width="600" height="400"></iframe>
       </div>
     </div>
     
