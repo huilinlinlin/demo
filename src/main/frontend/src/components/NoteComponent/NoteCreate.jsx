@@ -111,6 +111,7 @@ function NoteCreate({setRefreshFlag,editNote}){
           placeholder="系統名稱"
           value={formData.noteItem}
           onChange={handleInputChange}
+          className="inputCreate"
         />
         <br/>
         <input
@@ -119,6 +120,7 @@ function NoteCreate({setRefreshFlag,editNote}){
           placeholder="簡述筆記內容"
           value={formData.noteContent}
           onChange={handleInputChange}
+          className="inputCreate"
         />
         <input type="file" name="file"/>
         <br/>

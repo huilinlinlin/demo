@@ -1,5 +1,9 @@
 body{
   background-color: #FAF9EE;
+  overflow: hidden;  /* 隱藏所有滾動條 */
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 div {
   text-align: left;
@@ -14,16 +18,23 @@ form{
 input{
   margin-right: 5pt;
 }
-input[type="text"]{
-  margin-top: 5pt;
-  text-align: left;
-  width: 500px;
-}
 textarea{
   margin-top: 5pt;
   width: 500px;
 }
+.inputCreate{
+  margin-top: 5pt;
+  text-align: left;
+  width: 300px;
+}
+.inputSelect{
+  margin-top: 5pt;
+  margin-bottom: 5pt;
+  text-align: left;
+  width: 200px;
+}
 .title{
+  margin-left: 20pt;
   text-align: center;
   font-size: 2em;
 }
@@ -33,18 +44,24 @@ textarea{
 }
 .showSection{
   display: flex;
-  flex-direction: row;;
+  flex-direction: row;
   height: '100vh';
 }
 .listSection{
   width: 40%;
+  height: 240pt;
   background-color: #DCCFC0;
   overflow: auto; 
   margin: 5pt;
+  overflow: auto;
+  scrollbar-width: thin;
 }
 .detailSection{
   width: 90%;
+  height: 240pt;
   background-color: #EEEEEE;
   overflow: auto; 
   margin: 5pt;
+  overflow: auto;
+  scrollbar-width: thin;
 }

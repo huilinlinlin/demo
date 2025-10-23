@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import axios from "axios";
 import '../../css/Note.css'
 function NoteShow({refreshFlag,setEditNote}) {
   const [notes, setNotes] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [detail, setDetail] = useState([]);
+  const [isImage, setIsImage] = useState(false);
   //show
   useEffect(() => {
     fetch("http://localhost:8081/note/index")
@@ -18,18 +20,31 @@ function NoteShow({refreshFlag,setEditNote}) {
  );
  const doEdit = (note) =>{
    setEditNote(note);
-console.log(note.noteId)
-   fetch("http://localhost:8081/note/readFile/"+ note.noteId,{
-      method: "GET",
+   axios.get("http://localhost:8081/note/readFile/"+ note.noteId,{
+      responseType: 'blob',//二進位檔案資料，不要自動把它當成文字或 JSON
       headers: {
         "Content-Type": "text/plain"
       }
-      }).then(res => {
-          if (!res.ok) throw new Error("讀取失敗");
-          return res.text();
-      }).then(text  => {
-        setDetail(text);
-      }).catch(err => console.log("Post error:", err));
+      }).then(response => {
+        const contentType = response.headers['content-type'];
+        
+        if(contentType.includes('text')){
+          const reader = new FileReader();
+          reader.onload = () => {
+            const text = reader.result;
+            setDetail(text);
+            setIsImage(false);
+          }
+          reader.readAsText(response.data);
+        }else if(contentType.includes('image')){
+            const url = URL.createObjectURL(response.data);
+            setDetail(url);
+            setIsImage(true);
+        }else{
+          setDetail("未知檔案");
+          setIsImage(false);
+        }
+      }).catch(err => console.log("axios error:", err));
  }
  const doDownload = (noteId) =>{
    // 組合下載 URL
@@ -45,15 +60,14 @@ console.log(note.noteId)
  }
   return (
     <>
-    <div >
-      搜尋:
-      <input type='text' value={searchTerm} 
-        onChange={ e => setSearchTerm(e.target.value)}
-        placeholder="輸入關鍵字" />
-    </div>
-    <hr/>
+    
     <div className={`showSection`} >
   <div className={`listSection`} >
+        <div >
+          搜尋：<input className="inputSelect"　type='text' value={searchTerm} 
+            onChange={ e => setSearchTerm(e.target.value)}
+            placeholder="輸入關鍵字" />
+        </div>
         <table border={1}>
           <thead>
             <tr>
@@ -79,7 +93,11 @@ console.log(note.noteId)
         </table>
       </div>
       <div className={`detailSection`} >
-           <iframe src="http://localhost:8081/note/readFile/10" width="600" height="400"></iframe>
+         {isImage ? (
+          <img src={detail} alt="note" style={{ maxWidth: '80%' }} />
+         ):(
+          <pre>{detail}</pre>
+         )}
       </div>
     </div>
     
