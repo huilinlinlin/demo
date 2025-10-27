@@ -46,9 +46,9 @@ function NoteShow({refreshFlag,setEditNote}) {
         }
       }).catch(err => console.log("axios error:", err));
  }
- const doDownload = (noteId) =>{
+ const doDownload = (fileName) =>{
    // 組合下載 URL
-    const downloadUrl = 'http://localhost:8081/note/download.do?id=' + encodeURIComponent(noteId);
+    const downloadUrl = 'http://localhost:8081/note/download.do?fileName=' + encodeURIComponent(fileName);
 
     // 建立一個隱藏的 <a> 標籤並觸發 click
     const a = document.createElement('a');
@@ -64,7 +64,7 @@ function NoteShow({refreshFlag,setEditNote}) {
     <div className={`showSection`} >
   <div className={`listSection`} >
         <div >
-          搜尋：<input className="inputSelect"　type='text' value={searchTerm} 
+          搜尋：<input className="inputSelect" type='text' value={searchTerm} 
             onChange={ e => setSearchTerm(e.target.value)}
             placeholder="輸入關鍵字" />
         </div>
@@ -81,10 +81,11 @@ function NoteShow({refreshFlag,setEditNote}) {
             <tr key = {note.noteId}>
               <td>{note.noteItem}</td>
               <td><div onClick = { () => doEdit(note)}>{note.noteContent}</div></td>
-              <td>{note.noteFile && (
-                  <div onClick={() => doDownload(note.noteId)}>
-                    下載
-                  </div>)}
+              <td>
+                 { note.noteFile && ( note.noteFile.split(',').map((file,index) => (
+                  <div key={index} onClick={() => doDownload(file)}>{file}
+                  </div>)
+                 ))}                
               </td>
               {/* <td>{note.noteDate == null ? "":note.noteDate.split('.')[0]}</td> */}
             </tr>

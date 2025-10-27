@@ -1,4 +1,5 @@
 import React, {useState, useEffect} from "react";
+import { useRef } from 'react';
 import '../../css/Note.css'
 
 function NoteCreate({setRefreshFlag,editNote}){
@@ -16,27 +17,44 @@ function NoteCreate({setRefreshFlag,editNote}){
           [name]: value
       }));
   }
+  const fileInputRef = useRef(null);
+  const handleFileChange = () => {
+    const files = fileInputRef.current.files;
+    //1.檔案數2個
+    if(files.length > 2){
+      alert("最多兩個檔案");
+      fileInputRef.current.value = '';
+      return;
+    }
+    //2.檔案大小限制1MB
+    const maxSize = 1 * 1024 * 1024;
+    for (let i = 0; i < files.length; i++) {
+      if (files[i].size > maxSize) {
+        alert(`${files[i].name} 太大，不能超過 1MB`);
+        fileInputRef.current.value = '';
+        break;
+      }
+    }
+  }  
   const handleSubmit = (e) => {
     //防止表單送出後頁面重新整理
     e.preventDefault();
     //setData
     const date = getDate();
-    const fileInput = document.querySelector('input[type="file"][name="file"]');
-    const file = fileInput.files[0];
     const newFormData = new FormData();
+    const files = fileInputRef.current.files;
     newFormData.append("noteItem",formData.noteItem);
     newFormData.append("noteContent",formData.noteContent);
-    if (file) {
-      newFormData.append("noteFile", file);
-    }
     newFormData.append("noteDate",date);
+    Array.from(files).forEach(file => {
+      newFormData.append("noteFile",file);
+    }); 
 
     // 防止空資料送出
     if (!formData.noteItem || !formData.noteContent) {
         alert("請輸入帳號與留言內容"+!formData.noteItem+!formData.noteContent);
         return;
-    }
- console.log("newFormData"+newFormData);   
+    } 
     //送出資料 
     const isNew = (noteId === undefined || noteId === '');
     fetch("http://localhost:8081/note"+ (isNew ? '': '/'+noteId),{
@@ -122,7 +140,8 @@ function NoteCreate({setRefreshFlag,editNote}){
           onChange={handleInputChange}
           className="inputCreate"
         />
-        <input type="file" name="file"/>
+        <label><input type="file" name="file" accept=".jpg,.jpeg,.png,.gif,.txt,.sql" multiple 
+        onChange={handleFileChange} ref={fileInputRef}/></label>
         <br/>
         <input type="button" value="SAVE" onClick={handleSubmit}/>
         <input type="button" value="NEW" onClick={() => doclear('R') }/>

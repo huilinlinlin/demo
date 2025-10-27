@@ -68,16 +68,17 @@ public class NoteController {
     public Note createNote(
         @RequestParam("noteItem") String noteItem,
         @RequestParam("noteContent") String noteContent,
-        @RequestParam(value = "noteFile", required = false) MultipartFile file,
+        @RequestParam(value = "noteFile", required = false) MultipartFile[] files,
         @RequestParam("noteDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime noteDate
     ){ 
+          System.out.println("!!!");
         // 建立 Note 實體
         Note note = new Note();
         note.setNoteItem(noteItem);
         note.setNoteContent(noteContent);
         note.setNoteDate(noteDate);
         noteRepository.save(note);
-        Optional.ofNullable(file).ifPresent(f -> saveFile(note.getNoteId(), f));
+        Optional.ofNullable(files).ifPresent(f -> saveFile(note.getNoteId(), f));
         return note;
     }
 
@@ -87,16 +88,18 @@ public class NoteController {
         @PathVariable Integer id,
         @RequestParam("noteItem") String noteItem,
         @RequestParam("noteContent") String noteContent,
-        @RequestParam(value = "noteFile", required = false) MultipartFile file,
+        @RequestParam(value = "noteFile", required = false) MultipartFile[] files,
         @RequestParam("noteDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime noteDate) {
-            // 儲存檔案到本地目錄            
+            // 儲存檔案到本地目錄  
+        System.out.println("!!!");
         return noteRepository.findById(id)
                 .map(note -> {
                     note.setNoteItem(noteItem);
                     note.setNoteContent(noteContent);
                     note.setNoteDate(noteDate);
                     Note savedNote = noteRepository.save(note);
-                    Optional.ofNullable(file).ifPresent(f -> saveFile(note.getNoteId(), f));
+                    System.out.println(files.length);
+                    Optional.ofNullable(files).ifPresent(f -> saveFile(note.getNoteId(), f));
                     return ResponseEntity.ok(savedNote);
                 })
                 .orElse(ResponseEntity.notFound().build()); 
@@ -113,65 +116,67 @@ public class NoteController {
     }
 
     //上傳檔案
-    public void saveFile ( Integer noteId, MultipartFile file){
-        String originalFilename = file.getOriginalFilename();
-        String extension = originalFilename == null ? "txt" : originalFilename.substring(originalFilename.lastIndexOf('.')+1);   
-        extension = extension.equals("sql")  ? "txt" : extension ;
-        String fileName = noteId.toString()+"."+extension;  
-        Path filePath = Paths.get(noteFilePath+"\\" , fileName);
-
-        try {
-            Files.createDirectories(filePath.getParent()); // 確保目錄存在
-            Files.write(filePath, file.getBytes());
-            noteRepository.findById(noteId).ifPresent(note ->{
-                note.setNoteFile(fileName);
-                noteRepository.save(note);
-            });
-           
-        } catch (IOException e) {
-           System.out.println(e);
-        } 
+    public void saveFile ( Integer noteId, MultipartFile[] files){
+        System.out.println(files.length);
+        int count =1;
+        String noteFile = "";
+        for (MultipartFile file : files) {
+            String originalFilename = file.getOriginalFilename();
+            String extension = originalFilename == null ? "txt" : originalFilename.substring(originalFilename.lastIndexOf('.')+1);
+            extension = extension.equals("sql")  ? "txt" : extension ;
+            String fileName = noteId.toString()+"_"+count+"."+extension;
+            Path filePath = Paths.get(noteFilePath+"\\" , fileName);
+            noteFile = noteFile + (noteFile.equals("") ? fileName : (","+fileName));
+            System.out.println(noteFile);
+            try {
+                Files.createDirectories(filePath.getParent()); // 確保目錄存在
+                Files.write(filePath, file.getBytes());    
+            } catch (IOException e) {
+                System.out.println(e);
+            } 
+            count++;
+        }
+        final String finalNoteFile = noteFile;
+        noteRepository.findById(noteId).ifPresent(note ->{
+            note.setNoteFile(finalNoteFile);
+            noteRepository.save(note);
+        });
     }
 
     //下載檔案
     @GetMapping("/download.do")
-    public void download(@RequestParam Integer id,HttpServletResponse response,HttpServletRequest request) {
-        Optional<Note> optionalNote = noteRepository.findById(id);
-        if (optionalNote.isPresent()){
-            Note note = optionalNote.get();
-            String fileName = note.getNoteFile();
-            File file = new File (noteFilePath+File.separator+fileName);
-                        
-            if (!file.exists() || ! new File(noteFilePath).isDirectory()){
-                System.out.println("檔案或目錄不存在");
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                return ;
+    public void download(@RequestParam String fileName,HttpServletResponse response,HttpServletRequest request) {        
+        File file = new File (noteFilePath+File.separator+fileName);             
+        if (!file.exists() || ! new File(noteFilePath).isDirectory()){
+            System.out.println("檔案或目錄不存在");
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return ;
+        }
+        try (FileInputStream fis = new FileInputStream(file);
+            BufferedOutputStream bos = new BufferedOutputStream(response.getOutputStream())){
+            String contentType = request.getServletContext().getMimeType(fileName);
+            if (contentType == null) {
+                contentType = "application/octet-stream";
             }
-            try (FileInputStream fis = new FileInputStream(file);
-                BufferedOutputStream bos = new BufferedOutputStream(response.getOutputStream())){
-                String contentType = request.getServletContext().getMimeType(fileName);
-                if (contentType == null) {
-                    contentType = "application/octet-stream";
-                }
-                if (contentType.startsWith("text/")) {
-                    response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-                }
-                response.setContentType(contentType);                    
+            if (contentType.startsWith("text/")) {
                 response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-                String encodedFileName = URLEncoder.encode(fileName, "UTF-8").replaceAll("\\+", "%20");
-                response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFileName);
-                response.setContentLength((int) file.length()); 
-                byte[] buffer = new byte[8192];
-                int bytesRead;
-                while ((bytesRead = fis.read(buffer)) != -1) {
-                    bos.write(buffer, 0, bytesRead);
-                }
-                bos.flush();
-            } catch (Exception e) {
+            }
+            response.setContentType(contentType);                    
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+            String encodedFileName = URLEncoder.encode(fileName, "UTF-8").replaceAll("\\+", "%20");
+            response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFileName);
+            response.setContentLength((int) file.length()); 
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                bos.write(buffer, 0, bytesRead);
+            }
+            bos.flush();
+        } catch (Exception e) {
             System.out.println("下載檔案失敗: "+e.toString());
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            }
-        }       
+        }
+        
     }
 
      //讀取檔案

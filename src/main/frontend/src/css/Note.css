@@ -65,3 +65,12 @@ textarea{
   overflow: auto;
   scrollbar-width: thin;
 }
+/* input[type="file"]{
+  display: none;
+}
+label{
+  border-radius: 5px;
+  background-color: #DCCFC0;
+  border: 2px solid #DCCFC0;
+  margin-right: 5pt;
+} */
