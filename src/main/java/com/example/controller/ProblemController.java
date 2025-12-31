@@ -8,13 +8,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.entity.Note;
+import com.example.entity.Problem;
 import java.util.Base64;
 
-import com.example.config.NoteRepository;
+import com.example.config.ProblemRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 
 import org.springframework.http.MediaType;
 
@@ -35,98 +36,98 @@ import java.util.Optional;
 
 @CrossOrigin(origins = "http://localhost:5173")  // 允許前端的位址
 @RestController
-@RequestMapping("/note")
-public class NoteController {
+@RequestMapping("/problem")
+public class ProblemController {
 
     @Autowired
-    private NoteRepository noteRepository;
-    private String noteFilePath = "C:\\DataSource\\notefile";
+    private ProblemRepository problemRepository;
+    private String problemFilePath = "C:\\DataSource\\problemfile";
 
     // 查全部
     @GetMapping("/index")
-    public List<Note> getAllNotes() {
-        return noteRepository.findAll(Sort.by(Sort.Direction.DESC,"noteDate"));
+    public List<Problem> getAllProblems() {
+        return problemRepository.findAll(Sort.by(Sort.Direction.DESC,"problemDate"));
     }
 
     // 依 ID 查
     @GetMapping("/{id}")
-    public ResponseEntity<Note> getNoteById(@PathVariable Integer id) {
-        Optional<Note> optionalNote = noteRepository.findById(id);
-        return optionalNote.map(ResponseEntity::ok)
+    public ResponseEntity<Problem> getProblemById(@PathVariable Integer id) {
+        Optional<Problem> optionalProblem = problemRepository.findById(id);
+        return optionalProblem.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     // 查某個使用者的留言
     @GetMapping("/item/{item}")
-    public List<Note> getNotesByUserId(@PathVariable String item) {
-        return noteRepository.findByNoteItem(item);
+    public List<Problem> getProblemsByUserId(@PathVariable String item) {
+        return problemRepository.findByProblemItem(item);
     }
 
     // 新增留言
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Note createNote(
-        @RequestParam("noteItem") String noteItem,
-        @RequestParam("noteContent") String noteContent,
-        @RequestParam(value = "noteFile", required = false) MultipartFile[] files,
-        @RequestParam("noteDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime noteDate
+    public Problem createProblem(
+        @RequestParam("problemItem") String problemItem,
+        @RequestParam("problemContent") String problemContent,
+        @RequestParam(value = "problemFile", required = false) MultipartFile[] files,
+        @RequestParam("problemDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime problemDate
     ){ 
           System.out.println("!!!");
-        // 建立 Note 實體
-        Note note = new Note();
-        note.setNoteItem(noteItem);
-        note.setNoteContent(noteContent);
-        note.setNoteDate(noteDate);
-        noteRepository.save(note);
-        Optional.ofNullable(files).ifPresent(f -> saveFile(note.getNoteId(), f));
-        return note;
+        // 建立 Problem 實體
+        Problem problem = new Problem();
+        problem.setProblemItem(problemItem);
+        problem.setProblemContent(problemContent);
+        problem.setProblemDate(problemDate);
+        problemRepository.save(problem);
+        Optional.ofNullable(files).ifPresent(f -> saveFile(problem.getProblemId(), f));
+        return problem;
     }
 
     // 更新留言
     @PutMapping("/{id}")
-    public ResponseEntity<Note> updateNote(
+    public ResponseEntity<Problem> updateProblem(
         @PathVariable Integer id,
-        @RequestParam("noteItem") String noteItem,
-        @RequestParam("noteContent") String noteContent,
-        @RequestParam(value = "noteFile", required = false) MultipartFile[] files,
-        @RequestParam("noteDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime noteDate) {
+        @RequestParam("problemItem") String problemItem,
+        @RequestParam("problemContent") String problemContent,
+        @RequestParam(value = "problemFile", required = false) MultipartFile[] files,
+        @RequestParam("problemDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime problemDate) {
             // 儲存檔案到本地目錄  
         System.out.println("!!!");
-        return noteRepository.findById(id)
-                .map(note -> {
-                    note.setNoteItem(noteItem);
-                    note.setNoteContent(noteContent);
-                    note.setNoteDate(noteDate);
-                    Note savedNote = noteRepository.save(note);
+        return problemRepository.findById(id)
+                .map(problem -> {
+                    problem.setProblemItem(problemItem);
+                    problem.setProblemContent(problemContent);
+                    problem.setProblemDate(problemDate);
+                    Problem savedProblem = problemRepository.save(problem);
                     System.out.println(files.length);
-                    Optional.ofNullable(files).ifPresent(f -> saveFile(note.getNoteId(), f));
-                    return ResponseEntity.ok(savedNote);
+                    Optional.ofNullable(files).ifPresent(f -> saveFile(problem.getProblemId(), f));
+                    return ResponseEntity.ok(savedProblem);
                 })
                 .orElse(ResponseEntity.notFound().build()); 
     }
 
     // 刪除留言
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteNote(@PathVariable Integer id) {    
-        if (noteRepository.existsById(id)) {
-            System.out.println("刪除");//noteRepository.deleteById(id);
+    public ResponseEntity<String> deleteProblem(@PathVariable Integer id) {    
+        if (problemRepository.existsById(id)) {
+            System.out.println("刪除");//problemRepository.deleteById(id);
             return ResponseEntity.status(HttpStatus.OK).body("刪除成功");
         }
         return ResponseEntity.status(HttpStatus.OK).body("刪除失敗");
     }
 
     //上傳檔案
-    public void saveFile ( Integer noteId, MultipartFile[] files){
+    public void saveFile ( Integer problemId, MultipartFile[] files){
         System.out.println(files.length);
         int count =1;
-        String noteFile = "";
+        String problemFile = "";
         for (MultipartFile file : files) {
             String originalFilename = file.getOriginalFilename();
             String extension = originalFilename == null ? "txt" : originalFilename.substring(originalFilename.lastIndexOf('.')+1);
             extension = extension.equals("sql")  ? "txt" : extension ;
-            String fileName = noteId.toString()+"_"+count+"."+extension;
-            Path filePath = Paths.get(noteFilePath+"\\" , fileName);
-            noteFile = noteFile + (noteFile.equals("") ? fileName : (","+fileName));
-            System.out.println(noteFile);
+            String fileName = problemId.toString()+"_"+count+"."+extension;
+            Path filePath = Paths.get(problemFilePath+"\\" , fileName);
+            problemFile = problemFile + (problemFile.equals("") ? fileName : (","+fileName));
+            System.out.println(problemFile);
             try {
                 Files.createDirectories(filePath.getParent()); // 確保目錄存在
                 Files.write(filePath, file.getBytes());    
@@ -135,18 +136,18 @@ public class NoteController {
             } 
             count++;
         }
-        final String finalNoteFile = noteFile;
-        noteRepository.findById(noteId).ifPresent(note ->{
-            note.setNoteFile(finalNoteFile);
-            noteRepository.save(note);
+        final String finalProblemFile = problemFile;
+        problemRepository.findById(problemId).ifPresent(problem ->{
+            problem.setProblemFile(finalProblemFile);
+            problemRepository.save(problem);
         });
     }
 
     //下載檔案
     @GetMapping("/download.do")
     public void download(@RequestParam String fileName,HttpServletResponse response,HttpServletRequest request) {        
-        File file = new File (noteFilePath+File.separator+fileName);             
-        if (!file.exists() || ! new File(noteFilePath).isDirectory()){
+        File file = new File (problemFilePath+File.separator+fileName);             
+        if (!file.exists() || ! new File(problemFilePath).isDirectory()){
             System.out.println("檔案或目錄不存在");
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return ;
@@ -181,13 +182,13 @@ public class NoteController {
      //讀取檔案
      @GetMapping("/readFile/{id}")
      public ResponseEntity<Map<String, Object>> readFile(@PathVariable Integer id) {
-        Optional<Note> optionalNote = noteRepository.findById(id);
-        if (optionalNote.isEmpty()){
+        Optional<Problem> optionalProblem = problemRepository.findById(id);
+        if (optionalProblem.isEmpty()){
             return ResponseEntity.notFound().build();
         }   
-        Note note = optionalNote.get();
-        String noteFile = note.getNoteFile();
-        String[] fileNames = (noteFile == null || noteFile.isEmpty()) ? new String[0] :noteFile.split(",");
+        Problem problem = optionalProblem.get();
+        String problemFile = problem.getProblemFile();
+        String[] fileNames = (problemFile == null || problemFile.isEmpty()) ? new String[0] :problemFile.split(",");
         Map <String,Object> response = new HashMap<>();
         for(String fileName:fileNames){
             if(fileName.endsWith(".jpg")  || fileName.endsWith(".jpge")|| fileName.endsWith(".png")){
@@ -200,7 +201,7 @@ public class NoteController {
      }   
     private Map<String, String> loadFileAsBase64(String fileName) {
         try {
-            File file = new File(noteFilePath + File.separator + fileName);
+            File file = new File(problemFilePath + File.separator + fileName);
             byte[] bytes = Files.readAllBytes(file.toPath());
 
             Map<String, String> fileInfo = new HashMap<>();

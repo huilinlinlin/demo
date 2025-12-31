@@ -1,13 +1,14 @@
-import React, {useState, useEffect,useRef} from "react";
-import '../../css/Note.css'
+import React, {useState, useEffect} from "react";
+import { useRef } from 'react';
+import '../../css/Problem.css'
 
-function NoteCreate({setRefreshFlag,editNote}){
+function ProblemCreate({setRefreshFlag, editProblem}){
   //新增
   const [formData,setFormData] = useState({
-      noteItem:'',
-      noteContent:'',
-      noteFile:'',
-      noteDate: ''
+      problemItem:'',
+      problemContent:'',
+      problemFile:'',
+      problemDate: ''
   });
   const handleInputChange = (e) => {  
       const {name,value} = e.target;
@@ -34,18 +35,6 @@ function NoteCreate({setRefreshFlag,editNote}){
         break;
       }
     }
-    //3️.允許的檔案類型（MIME type）
-   /* const allowedTypes = [
-        "text/txt",
-        "image/jpg",
-        "image/jpeg",
-        "image/png"
-    ];
-    if (!allowedTypes.includes(files.type)) {
-    alert(`${files.name} 檔案類型不支援`);
-    fileInputRef.current.value = '';
-    return;
-  }*/
   }  
   const handleSubmit = (e) => {
     //防止表單送出後頁面重新整理
@@ -54,25 +43,25 @@ function NoteCreate({setRefreshFlag,editNote}){
     const date = getDate();
     const newFormData = new FormData();
     const files = fileInputRef.current.files;
-    newFormData.append("noteItem",formData.noteItem);
-    newFormData.append("noteContent",formData.noteContent);
-    newFormData.append("noteDate",date);
+    newFormData.append("problemItem",formData.problemItem);
+    newFormData.append("problemContent",formData.problemContent);
+    newFormData.append("problemDate",date);
     Array.from(files).forEach(file => {
-      newFormData.append("noteFile",file);
+      newFormData.append("problemFile",file);
     }); 
 
     // 防止空資料送出
-    if (!formData.noteItem || !formData.noteContent) {
-        alert("請輸入帳號與留言內容"+!formData.noteItem+!formData.noteContent);
+    if (!formData.problemItem || !formData.problemContent) {
+        alert("請輸入類型與內容");
         return;
     } 
     //送出資料 
-    const isNew = (noteId === undefined || noteId === '');
-    fetch("http://localhost:8081/note"+ (isNew ? '': '/'+noteId),{
+    const isNew = (problemId === undefined || problemId === '');
+    fetch("http://localhost:8081/problem"+ (isNew ? '': '/'+problemId),{
       method: isNew ? "POST": "PUT",
       body: newFormData,
       }).then(res => {
-          if (!res.ok) throw new Error("新增留言失敗");
+          if (!res.ok) throw new Error("新增問題失敗");
           return res.json();
       }).then(data => {
       // 新增成功清空表單
@@ -87,22 +76,22 @@ function NoteCreate({setRefreshFlag,editNote}){
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   }
   //編輯
-  const [noteId, setNoteid] = React.useState('');
+  const [problemId, setProblemId] = React.useState('');
   useEffect(() => {
-    if (editNote) {
-      setNoteid(editNote.noteId || undefined)
+    if (editProblem) {
+      setProblemId(editProblem.problemId || undefined)
       setFormData({
-        noteItem: editNote.noteItem || '',
-        noteContent: editNote.noteContent || '',
-        noteFile: editNote.noteFile || ''
+        problemItem: editProblem.problemItem || '',
+        problemContent: editProblem.problemContent || '',
+        problemFile: editProblem.problemFile || ''
       });
     }
-  }, [editNote]);
+  }, [editProblem]);
   //刪除
   const doDelete = () =>{
     let result = confirm("確定要刪除嗎?");
-    if (result && noteId !== ''){
-      fetch("http://localhost:8081/note"+ '/'+ noteId,{
+    if (result && problemId !== ''){
+      fetch("http://localhost:8081/problem"+ '/'+ problemId,{
       method: "DELETE",
       headers: {
         "Content-Type": "application/json"
@@ -119,10 +108,10 @@ function NoteCreate({setRefreshFlag,editNote}){
   }
   const doclear = (type) => {
     if(type === 'R'){
-      setNoteid('');
-      setFormData({ noteItem: '', noteContent: '' , noteDate: '' ,noteFile: ''});
+      setProblemId('');
+      setFormData({ problemItem: '', problemContent: '' , problemDate: '' ,problemFile: ''});
     }else{
-      setFormData({ noteItem: editNote.noteItem, noteContent: '' ,noteFile: ''});
+      setFormData({ problemItem: editProblem?.problemItem || '', problemContent: '' ,problemFile: ''});
     }
     
   } 
@@ -131,23 +120,23 @@ function NoteCreate({setRefreshFlag,editNote}){
         <form encType="multipart/form-data">
         <input
           type="hidden"
-          name="noteId"
-          value={noteId}
+          name="problemId"
+          value={problemId}
         readOnly />  
         <input
           type="text"
-          name="noteItem"
-          placeholder="系統名稱"
-          value={formData.noteItem}
+          name="problemItem"
+          placeholder="類型"
+          value={formData.problemItem}
           onChange={handleInputChange}
           className="inputCreate"
         />
         <br/>
         <input
           type="text"
-          name="noteContent"
-          placeholder="簡述筆記內容"
-          value={formData.noteContent}
+          name="problemContent"
+          placeholder="內容"
+          value={formData.problemContent}
           onChange={handleInputChange}
           className="inputCreate"
         />
@@ -162,4 +151,4 @@ function NoteCreate({setRefreshFlag,editNote}){
        </>
     );
 }
-export default NoteCreate;
+export default ProblemCreate;
