@@ -67,17 +67,30 @@ public class NoteController {
     public Note createNote(
         @RequestParam("noteItem") String noteItem,
         @RequestParam("noteContent") String noteContent,
-        @RequestParam(value = "noteFile", required = false) MultipartFile[] files,
-        @RequestParam("noteDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime noteDate
-    ){ 
-          System.out.println("!!!");
+     //   @RequestParam(value = "noteFileImg", required = false) MultipartFile file,
+      //  @RequestParam("noteFileText")String noteFileText,
+        @RequestParam("noteDate") 
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime noteDate
+    )throws IOException{ 
         // 建立 Note 實體
         Note note = new Note();
         note.setNoteItem(noteItem);
         note.setNoteContent(noteContent);
         note.setNoteDate(noteDate);
         noteRepository.save(note);
-        Optional.ofNullable(files).ifPresent(f -> saveFile(note.getNoteId(), f));
+      /*  Optional.ofNullable(files).ifPresent(f -> saveFile(note.getNoteId(), f));
+        if(noteFileText != null && !noteFileText.isEmpty()){
+            Path dirPath = Paths.get(noteFilePath);
+            Path filePath = dirPath.resolve(note.getNoteId()+".txt");
+            Files.write(
+                filePath,
+                noteFileText.getBytes(StandardCharsets.UTF_8)
+            );
+            noteRepository.findById(note.getNoteId()).ifPresent(note1 ->{
+                note1.setNoteFile(note1.getNoteFile()+","+ note.getNoteId()+".txt");
+                noteRepository.save(note1);
+            });
+        }*/
         return note;
     }
 
@@ -87,18 +100,35 @@ public class NoteController {
         @PathVariable Integer id,
         @RequestParam("noteItem") String noteItem,
         @RequestParam("noteContent") String noteContent,
-        @RequestParam(value = "noteFile", required = false) MultipartFile[] files,
-        @RequestParam("noteDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime noteDate) {
-            // 儲存檔案到本地目錄  
-        System.out.println("!!!");
+        @RequestParam(value = "noteFileImg", required = false) MultipartFile file,
+        @RequestParam("noteFileText")String noteFileText,
+        @RequestParam("noteDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime noteDate
+    ){
+        // 儲存檔案到本地目錄  
+        System.out.println(noteFileText);
         return noteRepository.findById(id)
                 .map(note -> {
                     note.setNoteItem(noteItem);
                     note.setNoteContent(noteContent);
                     note.setNoteDate(noteDate);
+                    Optional.ofNullable(file).ifPresent(f -> saveFile(note.getNoteId(), f));
+                    if(noteFileText != null && !noteFileText.isEmpty()){
+                        Path dirPath = Paths.get(noteFilePath);
+                        Path filePath = dirPath.resolve(note.getNoteId()+".txt");
+                        try {
+                            Files.write(
+                                filePath,
+                                noteFileText.getBytes(StandardCharsets.UTF_8)
+                            );
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        noteRepository.findById(note.getNoteId()).ifPresent(note1 ->{
+                            note1.setNoteFile(note1.getNoteFile()+","+ note.getNoteId()+".txt");
+                            noteRepository.save(note1);
+                        });
+                    }
                     Note savedNote = noteRepository.save(note);
-                    System.out.println(files.length);
-                    Optional.ofNullable(files).ifPresent(f -> saveFile(note.getNoteId(), f));
                     return ResponseEntity.ok(savedNote);
                 })
                 .orElse(ResponseEntity.notFound().build()); 
@@ -114,33 +144,29 @@ public class NoteController {
         return ResponseEntity.status(HttpStatus.OK).body("刪除失敗");
     }
 
-    //上傳檔案
-    public void saveFile ( Integer noteId, MultipartFile[] files){
-        System.out.println(files.length);
-        int count =1;
+    //上傳圖檔
+    public void saveFile ( Integer noteId, MultipartFile file){      
         String noteFile = "";
-        for (MultipartFile file : files) {
-            String originalFilename = file.getOriginalFilename();
-            String extension = originalFilename == null ? "txt" : originalFilename.substring(originalFilename.lastIndexOf('.')+1);
-            extension = extension.equals("sql")  ? "txt" : extension ;
-            String fileName = noteId.toString()+"_"+count+"."+extension;
-            Path filePath = Paths.get(noteFilePath+"\\" , fileName);
-            noteFile = noteFile + (noteFile.equals("") ? fileName : (","+fileName));
-            System.out.println(noteFile);
-            try {
-                Files.createDirectories(filePath.getParent()); // 確保目錄存在
-                Files.write(filePath, file.getBytes());    
-            } catch (IOException e) {
-                System.out.println(e);
-            } 
-            count++;
-        }
+        String originalFilename = file.getOriginalFilename();
+        String extension = originalFilename == null ? "txt" : originalFilename.substring(originalFilename.lastIndexOf('.')+1);
+        extension = extension.equals("sql")  ? "txt" : extension ;
+        String fileName = noteId.toString()+"."+extension;
+        Path filePath = Paths.get(noteFilePath+"\\" , fileName);
+        noteFile = noteFile + (noteFile.equals("") ? fileName : (","+fileName));
+        System.out.println(noteFile);
+        try {
+            Files.createDirectories(filePath.getParent()); // 確保目錄存在
+            Files.write(filePath, file.getBytes());    
+        } catch (IOException e) {
+            System.out.println(e);
+        } 
         final String finalNoteFile = noteFile;
         noteRepository.findById(noteId).ifPresent(note ->{
             note.setNoteFile(finalNoteFile);
             noteRepository.save(note);
-        });
+        }); 
     }
+
 
     //下載檔案
     @GetMapping("/download.do")

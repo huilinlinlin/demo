@@ -10,8 +10,6 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
@@ -64,9 +62,6 @@ public class Encryptor {
 	public static void main(String[] args) {
 		try {
 			Encryptor encryptor = new Encryptor();
-			
-			// 要加密的字串
-			String dataString = "HelloWorld";
 			
 		//	System.out.println("main MESSAGE: dataString-->{}"+ dataString);
 		//	System.out.println("main MESSAGE: length-->{}"+ dataString.length());

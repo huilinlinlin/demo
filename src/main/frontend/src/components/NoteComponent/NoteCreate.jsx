@@ -6,7 +6,8 @@ function NoteCreate({setRefreshFlag,editNote}){
   const [formData,setFormData] = useState({
       noteItem:'',
       noteContent:'',
-      noteFile:'',
+      noteFileImg:'',
+      noteFileText:'',
       noteDate: ''
   });
   const handleInputChange = (e) => {  
@@ -18,34 +19,22 @@ function NoteCreate({setRefreshFlag,editNote}){
   }
   const fileInputRef = useRef(null);
   const handleFileChange = () => {
-    const files = fileInputRef.current.files;
-    //1.檔案數2個
-    if(files.length > 2){
-      alert("最多兩個檔案");
-      fileInputRef.current.value = '';
-      return;
-    }
-    //2.檔案大小限制1MB
+    const files = fileInputRef.current.files[0];
     const maxSize = 1 * 1024 * 1024;
-    for (let i = 0; i < files.length; i++) {
-      if (files[i].size > maxSize) {
-        alert(`${files[i].name} 太大，不能超過 1MB`);
+    //2.檔案大小限制1MB
+      if (files.size > maxSize) {
+        alert(`${files.name} 太大，不能超過 1MB`);
         fileInputRef.current.value = '';
-        break;
       }
-    }
     //3️.允許的檔案類型（MIME type）
-   /* const allowedTypes = [
-        "text/txt",
-        "image/jpg",
-        "image/jpeg",
-        "image/png"
-    ];
-    if (!allowedTypes.includes(files.type)) {
-    alert(`${files.name} 檔案類型不支援`);
-    fileInputRef.current.value = '';
-    return;
-  }*/
+      const allowedExtensions = ['jpg', 'jpeg', 'png', 'txt', 'sql'];
+      const file = files;
+      const ext = file.name.split('.').pop().toLowerCase();
+
+      if (!allowedExtensions.includes(ext)) {
+        alert(`${file.name} 檔案類型不支援`);
+        fileInputRef.current.value = '';
+      }
   }  
   const handleSubmit = (e) => {
     //防止表單送出後頁面重新整理
@@ -57,8 +46,9 @@ function NoteCreate({setRefreshFlag,editNote}){
     newFormData.append("noteItem",formData.noteItem);
     newFormData.append("noteContent",formData.noteContent);
     newFormData.append("noteDate",date);
+    newFormData.append("noteFileText",formData.noteFileText);
     Array.from(files).forEach(file => {
-      newFormData.append("noteFile",file);
+      newFormData.append("noteFileImg",file);
     }); 
 
     // 防止空資料送出
@@ -94,7 +84,7 @@ function NoteCreate({setRefreshFlag,editNote}){
       setFormData({
         noteItem: editNote.noteItem || '',
         noteContent: editNote.noteContent || '',
-        noteFile: editNote.noteFile || ''
+        noteFileImg: editNote.noteFileImg || ''
       });
     }
   }, [editNote]);
@@ -120,9 +110,9 @@ function NoteCreate({setRefreshFlag,editNote}){
   const doclear = (type) => {
     if(type === 'R'){
       setNoteid('');
-      setFormData({ noteItem: '', noteContent: '' , noteDate: '' ,noteFile: ''});
+      setFormData({ noteItem: '', noteContent: '' , noteDate: '' ,noteFileImg: ''});
     }else{
-      setFormData({ noteItem: editNote.noteItem, noteContent: '' ,noteFile: ''});
+      setFormData({ noteItem: editNote.noteItem, noteContent: '' ,noteFileImg: ''});
     }
     
   } 
@@ -151,7 +141,7 @@ function NoteCreate({setRefreshFlag,editNote}){
           onChange={handleInputChange}
           className="inputCreate"
         />
-        <label><input type="file" name="file" accept=".jpg,.jpeg,.png,.gif,.txt,.sql" multiple 
+        <label><input type="file" name="file" accept=".jpg,.jpeg,.png,.gif" 
         onChange={handleFileChange} ref={fileInputRef}/></label>
         <br/>
         <input type="button" value="SAVE" onClick={handleSubmit}/>
