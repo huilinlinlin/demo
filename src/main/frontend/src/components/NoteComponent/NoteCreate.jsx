@@ -1,4 +1,6 @@
 import React, {useState, useEffect,useRef} from "react";
+import { AiFillPicture } from "react-icons/ai";
+import { PiClipboardTextFill } from "react-icons/pi";
 import '../../css/Note.css'
 
 function NoteCreate({setRefreshFlag,editNote}){
@@ -6,8 +8,6 @@ function NoteCreate({setRefreshFlag,editNote}){
   const [formData,setFormData] = useState({
       noteItem:'',
       noteContent:'',
-      noteFileImg:'',
-      noteFileText:'',
       noteDate: ''
   });
   const handleInputChange = (e) => {  
@@ -17,23 +17,30 @@ function NoteCreate({setRefreshFlag,editNote}){
           [name]: value
       }));
   }
-  const fileInputRef = useRef(null);
-  const handleFileChange = () => {
-    const files = fileInputRef.current.files[0];
+  //檔案限制
+  const textFileInputRef = useRef(null);
+  const imgFileInputRef = useRef(null);
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+    if (!files || files.length === 0) return;
+    const file = files[0];
     const maxSize = 1 * 1024 * 1024;
     //2.檔案大小限制1MB
-      if (files.size > maxSize) {
-        alert(`${files.name} 太大，不能超過 1MB`);
-        fileInputRef.current.value = '';
+      if (file.size > maxSize) {
+        alert(`${file.name} 太大，不能超過 1MB`);
+        e.target.value = '';
+        return;
       }
     //3️.允許的檔案類型（MIME type）
-      const allowedExtensions = ['jpg', 'jpeg', 'png', 'txt', 'sql'];
-      const file = files;
+      const isText = name === 'noteTextFile';
+      const allowedExtensions = isText
+      ? ['txt', 'sql']
+      : ['jpg', 'jpeg', 'png', 'gif'];
       const ext = file.name.split('.').pop().toLowerCase();
-
       if (!allowedExtensions.includes(ext)) {
         alert(`${file.name} 檔案類型不支援`);
-        fileInputRef.current.value = '';
+        e.target.value = '';
+        return;
       }
   }  
   const handleSubmit = (e) => {
@@ -42,15 +49,18 @@ function NoteCreate({setRefreshFlag,editNote}){
     //setData
     const date = getDate();
     const newFormData = new FormData();
-    const files = fileInputRef.current.files;
+    const textFiles = textFileInputRef.current.files;
+    const imgFiles = imgFileInputRef.current.files;
     newFormData.append("noteItem",formData.noteItem);
     newFormData.append("noteContent",formData.noteContent);
     newFormData.append("noteDate",date);
-    newFormData.append("noteFileText",formData.noteFileText);
-    Array.from(files).forEach(file => {
-      newFormData.append("noteFileImg",file);
-    }); 
-
+    Array.from(textFiles).forEach(file => {
+      newFormData.append("noteTextFile",file);
+    });
+    Array.from(imgFiles).forEach(file => {
+      newFormData.append("noteImgFile",file);
+    });  
+console.log(formData)
     // 防止空資料送出
     if (!formData.noteItem || !formData.noteContent) {
         alert("請輸入帳號與留言內容"+!formData.noteItem+!formData.noteContent);
@@ -84,13 +94,14 @@ function NoteCreate({setRefreshFlag,editNote}){
       setFormData({
         noteItem: editNote.noteItem || '',
         noteContent: editNote.noteContent || '',
-        noteFileImg: editNote.noteFileImg || ''
+        noteImgFile: editNote.noteImgFile || '',
+        noteTextFile: editNote.noteTextFile || ''
       });
     }
   }, [editNote]);
   //刪除
   const doDelete = () =>{
-    let result = confirm("確定要刪除嗎?");
+    let result = window.confirm("確定要刪除嗎?");
     if (result && noteId !== ''){
       fetch("http://localhost:8081/note"+ '/'+ noteId,{
       method: "DELETE",
@@ -110,15 +121,16 @@ function NoteCreate({setRefreshFlag,editNote}){
   const doclear = (type) => {
     if(type === 'R'){
       setNoteid('');
-      setFormData({ noteItem: '', noteContent: '' , noteDate: '' ,noteFileImg: ''});
+      setFormData({ noteItem: '', noteContent: '' , noteDate: '' ,noteImgFile: '',noteTextFile: ''});
     }else{
-      setFormData({ noteItem: editNote.noteItem, noteContent: '' ,noteFileImg: ''});
+      setFormData({ noteItem: editNote.noteItem, noteContent: '' ,noteImgFile: '',noteTextFile: ''});     
     }
-    
+    if (textFileInputRef.current) textFileInputRef.current.value = '';
+    if (imgFileInputRef.current) imgFileInputRef.current.value = '';
   } 
     return (
         <>
-        <form encType="multipart/form-data">
+        <form onSubmit={handleSubmit} encType="multipart/form-data">
         <input
           type="hidden"
           name="noteId"
@@ -141,10 +153,12 @@ function NoteCreate({setRefreshFlag,editNote}){
           onChange={handleInputChange}
           className="inputCreate"
         />
-        <label><input type="file" name="file" accept=".jpg,.jpeg,.png,.gif" 
-        onChange={handleFileChange} ref={fileInputRef}/></label>
+        <label><PiClipboardTextFill size={24}/><input type="file" name="noteTextFile" accept=".txt,.sql" 
+        onChange={handleFileChange } ref={textFileInputRef} hidden/></label>
+        <label><AiFillPicture size={24}/><input type="file" name="noteImgFile" accept=".jpg,.jpeg,.png,.gif" 
+        onChange={handleFileChange} ref={imgFileInputRef} hidden/></label>
         <br/>
-        <input type="button" value="SAVE" onClick={handleSubmit}/>
+        <input type="submit" value="SAVE"/>
         <input type="button" value="NEW" onClick={() => doclear('R') }/>
         <input type="button" value="CLEAR" onClick={ () => doclear('C')}/>
         <input type="button" value="DELETE" onClick={doDelete}/>

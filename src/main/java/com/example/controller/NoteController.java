@@ -67,8 +67,8 @@ public class NoteController {
     public Note createNote(
         @RequestParam("noteItem") String noteItem,
         @RequestParam("noteContent") String noteContent,
-     //   @RequestParam(value = "noteFileImg", required = false) MultipartFile file,
-      //  @RequestParam("noteFileText")String noteFileText,
+        @RequestParam(value = "noteImgFile", required = false) MultipartFile noteImgFile,
+        @RequestParam(value = "noteTextFile", required = false) MultipartFile noteTextFile,
         @RequestParam("noteDate") 
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime noteDate
     )throws IOException{ 
@@ -77,23 +77,31 @@ public class NoteController {
         note.setNoteItem(noteItem);
         note.setNoteContent(noteContent);
         note.setNoteDate(noteDate);
+        String noteFile = uploadfile (noteImgFile) + uploadfile (noteTextFile);
+        note.setNoteFile(noteFile.length() > 1 ? noteFile.substring(0, noteFile.length() - 1) : "");
         noteRepository.save(note);
-      /*  Optional.ofNullable(files).ifPresent(f -> saveFile(note.getNoteId(), f));
-        if(noteFileText != null && !noteFileText.isEmpty()){
-            Path dirPath = Paths.get(noteFilePath);
-            Path filePath = dirPath.resolve(note.getNoteId()+".txt");
-            Files.write(
-                filePath,
-                noteFileText.getBytes(StandardCharsets.UTF_8)
-            );
-            noteRepository.findById(note.getNoteId()).ifPresent(note1 ->{
-                note1.setNoteFile(note1.getNoteFile()+","+ note.getNoteId()+".txt");
-                noteRepository.save(note1);
-            });
-        }*/
         return note;
     }
-
+    public String uploadfile (MultipartFile noteFile) throws IOException{
+        Long nextNoteId = noteRepository.findMaxId() ;
+        String newNoteId = String.valueOf(( nextNoteId == null ? 0L : nextNoteId ) +1 );
+        String newFileName = ""; 
+        if(noteFile != null && !noteFile.isEmpty()){
+            Path dirPath = Paths.get(noteFilePath);
+            String originalFilename = noteFile.getOriginalFilename();
+            if (originalFilename != null && originalFilename.contains(".")) {
+                String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+                if(extension.equals(".sql")){
+                    newFileName = newNoteId+ ".txt";
+                }else{
+                    newFileName = newNoteId+ extension;
+                }
+                Path filePath = dirPath.resolve(newFileName);
+                Files.write(filePath, noteFile.getBytes());
+            }
+        }
+        return newFileName + ","; 
+    }
     // 更新留言
     @PutMapping("/{id}")
     public ResponseEntity<Note> updateNote(
